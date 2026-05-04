@@ -11,7 +11,11 @@ import {
   Code2,
   BookOpen,
   LayoutGrid,
-  List as ListIcon
+  List as ListIcon,
+  Download,
+  Upload,
+  RotateCcw,
+  Settings2
 } from 'lucide-react';
 import { PROBLEM_DATA, type Problem } from './data/problems';
 
@@ -39,6 +43,51 @@ export default function App() {
       else next.add(id);
       return next;
     });
+  };
+
+  const exportProgress = () => {
+    const data = JSON.stringify({
+      solved: Array.from(solvedIds),
+      exportDate: new Date().toISOString(),
+      count: solvedIds.size
+    }, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `leetcode-488-progress-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importProgress = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = JSON.parse(e.target?.result as string);
+        const solved = content.solved || content; // Handle both legacy and new format
+        if (Array.isArray(solved)) {
+          setSolvedIds(new Set(solved.map(String)));
+          alert('Progress imported successfully!');
+        } else {
+          throw new Error('Invalid format');
+        }
+      } catch (err) {
+        alert('Error importing file. Please ensure it is a valid JSON progress file.');
+      }
+    };
+    reader.readAsText(file);
+    // Reset input
+    event.target.value = '';
+  };
+
+  const resetProgress = () => {
+    if (window.confirm('Are you sure you want to reset all progress? This action cannot be undone.')) {
+      setSolvedIds(new Set());
+    }
   };
 
   const allTopics = useMemo(() => {
@@ -114,6 +163,29 @@ export default function App() {
           </div>
           
           <div className="hidden md:flex items-center gap-6">
+            <div className="flex items-center gap-4 border-r border-slate-200 pr-6 mr-2">
+              <button 
+                onClick={exportProgress}
+                title="Export Progress"
+                className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+              >
+                <Download className="w-5 h-5" />
+              </button>
+              
+              <label className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all cursor-pointer">
+                <Upload className="w-5 h-5" />
+                <input type="file" accept=".json" onChange={importProgress} className="hidden" />
+              </label>
+
+              <button 
+                onClick={resetProgress}
+                title="Reset Progress"
+                className="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+              >
+                <RotateCcw className="w-5 h-5" />
+              </button>
+            </div>
+
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-slate-600">Total Progress:</span>
               <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
