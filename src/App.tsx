@@ -24,6 +24,7 @@ export default function App() {
   const [search, setSearch] = useState('');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('ALL');
   const [topicFilter, setTopicFilter] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
   useEffect(() => {
@@ -70,16 +71,18 @@ export default function App() {
 
   const filteredProblems = useMemo(() => {
     return PROBLEM_DATA.filter(p => {
+      const isSolved = solvedIds.has(p.Number);
       const matchesSearch = p.Title.toLowerCase().includes(search.toLowerCase()) || 
                            p.Topics.toLowerCase().includes(search.toLowerCase());
       const matchesDifficulty = difficultyFilter === 'ALL' || p.Difficulty === difficultyFilter;
-      let matchesTopic = topicFilter === 'ALL' || p.Topics.split(',').some(t => t.trim() === topicFilter);
-      // matchesTopic = solvedIds.forEach(element => {
-      //   element === p.Number
-      // });
-      return matchesSearch && matchesDifficulty && matchesTopic;
+      const matchesTopic = topicFilter === 'ALL' || p.Topics.split(',').some(t => t.trim() === topicFilter);
+      const matchesStatus = statusFilter === 'ALL' || 
+                           (statusFilter === 'SOLVED' && isSolved) || 
+                           (statusFilter === 'UNSOLVED' && !isSolved);
+      
+      return matchesSearch && matchesDifficulty && matchesTopic && matchesStatus;
     });
-  }, [search, difficultyFilter, topicFilter]);
+  }, [search, difficultyFilter, topicFilter, statusFilter, solvedIds]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100">
@@ -132,11 +135,21 @@ export default function App() {
               />
             </div>
             
-            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto text-xs sm:text-sm">
+              <select 
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="ALL">All Status</option>
+                <option value="SOLVED">Solved</option>
+                <option value="UNSOLVED">Unsolved</option>
+              </select>
+
               <select 
                 value={difficultyFilter}
                 onChange={(e) => setDifficultyFilter(e.target.value)}
-                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="ALL">Difficulty</option>
                 <option value="EASY">Easy</option>
