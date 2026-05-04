@@ -25,6 +25,7 @@ export default function App() {
   const [difficultyFilter, setDifficultyFilter] = useState<string>('ALL');
   const [topicFilter, setTopicFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [sortBy, setSortBy] = useState<string>('number-asc');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
   useEffect(() => {
@@ -70,7 +71,7 @@ export default function App() {
   }, [solvedIds]);
 
   const filteredProblems = useMemo(() => {
-    return PROBLEM_DATA.filter(p => {
+    const filtered = PROBLEM_DATA.filter(p => {
       const isSolved = solvedIds.has(p.Number);
       const matchesSearch = p.Title.toLowerCase().includes(search.toLowerCase()) || 
                            p.Topics.toLowerCase().includes(search.toLowerCase());
@@ -82,7 +83,21 @@ export default function App() {
       
       return matchesSearch && matchesDifficulty && matchesTopic && matchesStatus;
     });
-  }, [search, difficultyFilter, topicFilter, statusFilter, solvedIds]);
+
+    return filtered.sort((a, b) => {
+      const difficultyOrder: Record<string, number> = { 'EASY': 1, 'MEDIUM': 2, 'HARD': 3, '': 4 };
+      
+      switch (sortBy) {
+        case 'number-asc': return parseInt(a.Number) - parseInt(b.Number);
+        case 'number-desc': return parseInt(b.Number) - parseInt(a.Number);
+        case 'title-asc': return a.Title.localeCompare(b.Title);
+        case 'title-desc': return b.Title.localeCompare(a.Title);
+        case 'difficulty-asc': return (difficultyOrder[a.Difficulty] || 0) - (difficultyOrder[b.Difficulty] || 0);
+        case 'difficulty-desc': return (difficultyOrder[b.Difficulty] || 0) - (difficultyOrder[a.Difficulty] || 0);
+        default: return 0;
+      }
+    });
+  }, [search, difficultyFilter, topicFilter, statusFilter, solvedIds, sortBy]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100">
@@ -166,6 +181,19 @@ export default function App() {
                 {allTopics.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
 
+              <select 
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="number-asc">ID: Low to High</option>
+                <option value="number-desc">ID: High to Low</option>
+                <option value="difficulty-asc">Diff: Easy to Hard</option>
+                <option value="difficulty-desc">Diff: Hard to Easy</option>
+                <option value="title-asc">Title: A-Z</option>
+                <option value="title-desc">Title: Z-A</option>
+              </select>
+
               <div className="flex bg-slate-100 p-1 rounded-lg">
                 <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md ${viewMode === 'list' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}><ListIcon className="w-4 h-4" /></button>
                 <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md ${viewMode === 'grid' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}><LayoutGrid className="w-4 h-4" /></button>
@@ -195,6 +223,13 @@ export default function App() {
                 );
               })}
             </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Showing:</span>
+            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">{filteredProblems.length} results</span>
           </div>
         </div>
 
