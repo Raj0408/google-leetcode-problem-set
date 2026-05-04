@@ -73,7 +73,10 @@ export default function App() {
       const matchesSearch = p.Title.toLowerCase().includes(search.toLowerCase()) || 
                            p.Topics.toLowerCase().includes(search.toLowerCase());
       const matchesDifficulty = difficultyFilter === 'ALL' || p.Difficulty === difficultyFilter;
-      const matchesTopic = topicFilter === 'ALL' || p.Topics.split(',').some(t => t.trim() === topicFilter);
+      let matchesTopic = topicFilter === 'ALL' || p.Topics.split(',').some(t => t.trim() === topicFilter);
+      // matchesTopic = solvedIds.forEach(element => {
+      //   element === p.Number
+      // });
       return matchesSearch && matchesDifficulty && matchesTopic;
     });
   }, [search, difficultyFilter, topicFilter]);
@@ -147,6 +150,7 @@ export default function App() {
                 className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 max-w-[150px]"
               >
                 <option value="ALL">Topic</option>
+                <option value="SOLVED">Solved</option>
                 {allTopics.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
 
